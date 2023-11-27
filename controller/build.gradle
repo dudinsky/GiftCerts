@@ -1,0 +1,11 @@
+plugins {
+    id 'war'
+}
+
+dependencies {
+    implementation project(':model')
+    implementation project(':service')
+    compileOnly "javax.servlet:javax.servlet-api:4.0.1"
+    implementation "org.springframework:spring-webmvc:${springVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.15.1" // needed for @PathVariable to work (when transforming JSON String to an object)
+}

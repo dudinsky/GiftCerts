@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':model')
+    implementation "org.springframework:spring-core:${springVersion}"
+    implementation "org.springframework:spring-context:${springVersion}"
+    implementation "org.springframework:spring-tx:${springVersion}"
+}

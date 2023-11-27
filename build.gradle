@@ -1,0 +1,18 @@
+subprojects {
+    apply plugin: 'java'
+    ext {
+        springVersion = '5.3.27'
+        hikariCPVersion = '5.0.1'
+        postgresqlVersion = '42.6.0'
+    }
+    sourceCompatibility = 1.11
+    targetCompatibility = 1.11
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
