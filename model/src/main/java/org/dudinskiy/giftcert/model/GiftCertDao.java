@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 @Repository
 public class GiftCertDao {
@@ -157,7 +156,7 @@ public class GiftCertDao {
     public void deleteLinksToTagsByCertNames(String[] names) {
         List<GiftCert> giftCerts = getGiftCertsByNames(names);
         if (giftCerts.isEmpty()) return;
-        Long[] giftCertIds = IntStream.range(0, giftCerts.size()).mapToObj(i -> giftCerts.get(i).getGiftCertId()).toArray(Long[]::new);
+        Long[] giftCertIds = giftCerts.stream().map(GiftCert::getGiftCertId).toArray(Long[]::new);
         jdbcTemplate.update(DELETE_ALL_GIFT_CERTS_LINKS_BY_IDS + generateParamStr(giftCertIds.length), giftCertIds);
     }
 }

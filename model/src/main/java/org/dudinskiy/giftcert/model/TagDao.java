@@ -12,7 +12,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 @Repository
 public class TagDao {
@@ -77,7 +76,7 @@ public class TagDao {
     public void deleteLinksToCertsBy(String[] names) {
         List<Tag> tags = getTagByNames(names);
         if (tags.isEmpty()) return;
-        Long[] tagIds = IntStream.range(0, tags.size()).mapToObj(i -> tags.get(i).getTagId()).toArray(Long[]::new);
+        Long[] tagIds = tags.stream().map(Tag::getTagId).toArray(Long[]::new);
         jdbcTemplate.update(DELETE_ALL_TAGS_LINKS_BY_IDS + generateParamStr(tagIds.length), tagIds);
     }
 
