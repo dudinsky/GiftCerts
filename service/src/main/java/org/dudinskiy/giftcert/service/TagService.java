@@ -22,7 +22,7 @@ public class TagService {
     }
 
     public List<Tag> getTagsByNames(String[] tagNames) {
-        return tagDao.getTagByNames(tagNames);
+        return tagDao.getTagsByNames(tagNames);
     }
 
     public Integer deleteTags(String[] names) {

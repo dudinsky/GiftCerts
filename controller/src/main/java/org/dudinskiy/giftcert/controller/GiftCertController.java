@@ -17,12 +17,22 @@ public class GiftCertController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
     public String addGiftCert(@RequestBody GiftCert giftCert) {
-        return "Gift Certificate was inserted: " + giftCertService.addCert(giftCert);
+        try {
+            return "Gift Certificate was inserted: " + giftCertService.addCert(giftCert);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @GetMapping()
     public String getAllGiftCerts() {
-        return giftCertService.getAllGiftCerts().toString();
+        try {
+            return giftCertService.getAllGiftCerts().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @GetMapping("/search")
@@ -33,23 +43,43 @@ public class GiftCertController {
             @RequestParam(required = false) String sortByDate, // values: ASC/DESC
             @RequestParam(required = false) String sortByName // values: ASC/DESC
     ) {
-        return giftCertService.searchGiftCertsBy(tagName, certNamePart, certDescPart, sortByDate, sortByName).toString();
+        try {
+            return giftCertService.searchGiftCertsBy(tagName, certNamePart, certDescPart, sortByDate, sortByName).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @GetMapping("/{namesParam}")
     public String getGiftCertsByNames(@PathVariable String namesParam) {
         String[] names = namesParam.trim().split("\\s*,\\s*");
-        return giftCertService.getGiftCertsByNames(names).toString();
+        try {
+            return giftCertService.getGiftCertsByNames(names).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
     public String updateGiftCert(@RequestBody GiftCert giftCert) {
-        return "Gift Certificate was updated: " + giftCertService.updateCert(giftCert);
+        try {
+            return "Gift Certificate was updated: " + giftCertService.updateCert(giftCert);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @DeleteMapping("/{namesParam}")
     public String deleteGiftCert(@PathVariable String namesParam) {
         String[] names = namesParam.trim().split("\\s*,\\s*");
-        return String.format("%d GiftCert(s) were deleted by names: %s", giftCertService.deleteGiftCert(names), Arrays.asList(names));
+        try {
+            return String.format("%d GiftCert(s) were deleted by names: %s", giftCertService.deleteGiftCert(names), Arrays.asList(names));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 }

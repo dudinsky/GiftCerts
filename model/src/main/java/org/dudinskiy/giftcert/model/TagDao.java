@@ -1,7 +1,9 @@
 package org.dudinskiy.giftcert.model;
 
 import org.dudinskiy.giftcert.entity.Tag;
+import org.dudinskiy.giftcert.exception.DaoException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +32,7 @@ public class TagDao {
             " WHERE gift_cert_id = ?";
     private final String DELETE_ALL_TAGS_BY_NAMES = "DELETE FROM tag WHERE name IN (";
     private final String DELETE_ALL_TAGS_LINKS_BY_IDS = "DELETE FROM gift_certificate_tag WHERE tag_id IN (";
-    private final String DELETE_ALL_CERTS_LINKS_BY_IDS = "DELETE FROM gift_certificate_tag WHERE gift_cert_id=?";
+    private final String DELETE_ALL_CERTS_LINKS_BY_ID = "DELETE FROM gift_certificate_tag WHERE gift_cert_id=?";
     private final RowMapper<Tag> rowMapper = (rs, rowNum) -> {
         Tag tag = new Tag();
         tag.setTagId(rs.getLong("tag_id"));
@@ -39,34 +42,54 @@ public class TagDao {
 
     public Tag insertTag(Tag tag) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(INSERT_TAG, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, tag.getName());
-            return ps;
-        }, keyHolder);
+        try {
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(INSERT_TAG, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, tag.getName());
+                return ps;
+            }, keyHolder);
 
-        Map<String, Object> keys = keyHolder.getKeys();
-        if (keys != null) {
-            tag.setTagId((Long) keys.get("tag_id"));
+            Map<String, Object> keys =keyHolder.getKeys();
+            if (keys != null) {
+                tag.setTagId((Long) keys.get("tag_id"));
+            }
+            return tag;
+        } catch (DataAccessException e) {
+            throw new DaoException("INS-TAG", "Exception inserting " + tag, e);
         }
-        return tag;
     }
 
     public List<Tag> getAllTags() {
-        return jdbcTemplate.query(SELECT_ALL_TAGS, rowMapper);
+        try {
+            return jdbcTemplate.query(SELECT_ALL_TAGS, rowMapper);
+        } catch (DataAccessException e) {
+            throw new DaoException("GET-ALL-TAGS", "Exception selecting all tags ", e);
+        }
     }
 
-    public List<Tag> getTagByNames(String[] names) {
+    public List<Tag> getTagsByNames(String[] names) {
         if (names.length == 0) return new ArrayList<>();
-        return jdbcTemplate.query(SELECT_ALL_TAGS_BY_NAMES + generateParamStr(names.length), rowMapper, names);
+        try {
+            return jdbcTemplate.query(SELECT_ALL_TAGS_BY_NAMES + generateParamStr(names.length), rowMapper, names);
+        } catch (DataAccessException e) {
+            throw new DaoException("GET-TAGS-BY-NAMES", "Exception selecting tags by names " + Arrays.toString(names), e);
+        }
     }
 
     public List<Tag> getTagsForCertificate(Long giftCertId) {
-        return jdbcTemplate.query(SELECT_ALL_TAGS_BY_CERT_ID, rowMapper, giftCertId);
+        try {
+            return jdbcTemplate.query(SELECT_ALL_TAGS_BY_CERT_ID, rowMapper, giftCertId);
+        } catch (DataAccessException e) {
+            throw new DaoException("GET-TAGS-BY-CERT", "Exception selecting tags by cert Id=" + giftCertId, e);
+        }
     }
 
     public Integer deleteTags(String[] names) {
-        return jdbcTemplate.update(DELETE_ALL_TAGS_BY_NAMES + generateParamStr(names.length), names);
+        try {
+            return jdbcTemplate.update(DELETE_ALL_TAGS_BY_NAMES + generateParamStr(names.length), names);
+        } catch (DataAccessException e) {
+            throw new DaoException("DEL-TAGS-BY-NAMES", "Exception deleting tags by names " + Arrays.toString(names), e);
+        }
     }
 
     private String generateParamStr(int quantity) {
@@ -74,15 +97,23 @@ public class TagDao {
     }
 
     public void deleteLinksToCertsBy(String[] names) {
-        List<Tag> tags = getTagByNames(names);
+        List<Tag> tags = getTagsByNames(names);
         if (tags.isEmpty()) return;
         Long[] tagIds = tags.stream().map(Tag::getTagId).toArray(Long[]::new);
-        jdbcTemplate.update(DELETE_ALL_TAGS_LINKS_BY_IDS + generateParamStr(tagIds.length), tagIds);
+        try {
+            jdbcTemplate.update(DELETE_ALL_TAGS_LINKS_BY_IDS + generateParamStr(tagIds.length), tagIds);
+        } catch (DataAccessException e) {
+            throw new DaoException("DEL-TAGS-LINKS-BY-IDS", "Exception deleting tags links by tag Ids " + Arrays.toString(tagIds), e);
+        }
     }
 
     public Integer linkTagsToGiftCertificate(Long[] tagIds, Long giftCertId) {
         if (tagIds.length == 0) return 0;
-        return jdbcTemplate.update(INSERT_TAG_TO_CERT_LINK + generateLinkStr(tagIds.length), intersperse(giftCertId, tagIds));
+        try {
+            return jdbcTemplate.update(INSERT_TAG_TO_CERT_LINK + generateLinkStr(tagIds.length), intersperse(giftCertId, tagIds));
+        } catch (DataAccessException e) {
+            throw new DaoException("INS-TAGS-TO-CERT-LINKS", "Exception inserting tags to cert links: " + Arrays.toString(tagIds) + " to " + giftCertId, e);
+        }
     }
 
     private Long[] intersperse(Long giftCertId, Long[] tagIds) {
@@ -100,6 +131,10 @@ public class TagDao {
     }
 
     public Integer unlinkAllTagsByCertId(Long giftCertId) {
-        return jdbcTemplate.update(DELETE_ALL_CERTS_LINKS_BY_IDS, giftCertId);
+        try {
+            return jdbcTemplate.update(DELETE_ALL_CERTS_LINKS_BY_ID, giftCertId);
+        } catch (DataAccessException e) {
+            throw new DaoException("DEL-CERTS-LINKS-BY-ID", "Exception deleting certs links by cert Id=" + giftCertId, e);
+        }
     }
 }

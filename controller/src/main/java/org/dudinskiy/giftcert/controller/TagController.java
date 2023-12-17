@@ -17,23 +17,43 @@ public class TagController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
     public String addTag(@RequestBody Tag tag) {
-        return "Tag was inserted: " + tagService.addTag(tag);
+        try {
+            return "Tag was inserted: " + tagService.addTag(tag);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @GetMapping()
     public String getAllTags() {
-        return tagService.getAllTags().toString();
+        try {
+            return tagService.getAllTags().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @GetMapping("/{namesParam}")
     public String getTagsByNames(@PathVariable String namesParam) {
         String[] names = namesParam.trim().split("\\s*,\\s*");
-        return tagService.getTagsByNames(names).toString();
+        try {
+            return tagService.getTagsByNames(names).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 
     @DeleteMapping("/{namesParam}")
     public String deleteTags(@PathVariable String namesParam) {
         String[] names = namesParam.trim().split("\\s*,\\s*");
-        return String.format("%d Tag(s) were deleted by names: %s", tagService.deleteTags(names), Arrays.asList(names));
+        try {
+            return String.format("%d Tag(s) were deleted by names: %s", tagService.deleteTags(names), Arrays.asList(names));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.toString();
+        }
     }
 }

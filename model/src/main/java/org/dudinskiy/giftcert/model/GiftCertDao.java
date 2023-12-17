@@ -1,7 +1,9 @@
 package org.dudinskiy.giftcert.model;
 
 import org.dudinskiy.giftcert.entity.GiftCert;
+import org.dudinskiy.giftcert.exception.DaoException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -13,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,21 +61,33 @@ public class GiftCertDao {
     public GiftCert insertGiftCert(GiftCert giftCert) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         giftCert.setCreateDate(LocalDateTime.now());
-        namedJdbcTemplate.update(INSERT_GIFT_CERT, new BeanPropertySqlParameterSource(giftCert), keyHolder);
-        Map<String, Object> keys = keyHolder.getKeys();
-        if (keys != null) {
-            giftCert.setGiftCertId((Long) keys.get("gift_cert_id"));
+        try {
+            namedJdbcTemplate.update(INSERT_GIFT_CERT, new BeanPropertySqlParameterSource(giftCert), keyHolder);
+            Map<String, Object> keys = keyHolder.getKeys();
+            if (keys != null) {
+                giftCert.setGiftCertId((Long) keys.get("gift_cert_id"));
+            }
+            return giftCert;
+        } catch (DataAccessException e) {
+            throw new DaoException("INS-CERT", "Exception inserting " + giftCert, e);
         }
-        return giftCert;
     }
 
     public List<GiftCert> getAllGiftCerts() {
-        return jdbcTemplate.query(SELECT_ALL_GIFT_CERTS, rowMapper);
+        try {
+            return jdbcTemplate.query(SELECT_ALL_GIFT_CERTS, rowMapper);
+        } catch (DataAccessException e) {
+            throw new DaoException("GET-ALL-CERTS", "Exception selecting all certs ", e);
+        }
     }
 
     public List<GiftCert> getGiftCertsByNames(String[] names) {
         if (names.length == 0) return new ArrayList<>();
-        return jdbcTemplate.query(SELECT_ALL_GIFT_CERTS_BY_NAME + generateParamStr(names.length), rowMapper, names);
+        try {
+            return jdbcTemplate.query(SELECT_ALL_GIFT_CERTS_BY_NAME + generateParamStr(names.length), rowMapper, names);
+        } catch (DataAccessException e) {
+            throw new DaoException("GET-CERTS-BY-NAMES", "Exception selecting certs by names " + Arrays.toString(names), e);
+        }
     }
 
     public List<GiftCert> searchGiftCertsBy(String tagName, String certNamePart, String certDescPart, String sortByDate, String sortByName) {
@@ -130,7 +145,17 @@ public class GiftCertDao {
             }
         }
 //        System.out.println("sql = " + sql.toString());
-        return namedJdbcTemplate.query(sql.toString(), params, rowMapper);
+        try {
+            return namedJdbcTemplate.query(sql.toString(), params, rowMapper);
+        } catch (DataAccessException e) {
+            throw new DaoException("SEARCH-CERT-BY-TAG-BY-CERT-NAME-BY-DESC-ORDERED", "Exception selecting certs by"
+                    + " tagName=" + tagName
+                    + ", certNamePart=" + certNamePart
+                    + ", certDescPart=" + certDescPart
+                    + ", sortByDate=" + sortByDate
+                    + ", sortByName=" + sortByName
+                    , e);
+        }
     }
 
     private String generateParamStr(int quantity) {
@@ -145,18 +170,30 @@ public class GiftCertDao {
         if (giftCert.getDuration() != null) sql.append("duration=:duration, ");
         sql.append("last_update_date=:lastUpdateDate ").append(BY_ID);
         giftCert.setLastUpdateDate(LocalDateTime.now());
-        namedJdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource(giftCert));
-        return giftCert;
+        try {
+            namedJdbcTemplate.update(sql.toString(), new BeanPropertySqlParameterSource(giftCert));
+            return giftCert;
+        } catch (DataAccessException e) {
+            throw new DaoException("UPD-CERT", "Exception updating " + giftCert, e);
+        }
     }
 
     public Integer deleteGiftCerts(String[] names) {
-        return jdbcTemplate.update(DELETE_ALL_GIFT_CERTS_BY_NAMES + generateParamStr(names.length), names);
+        try {
+            return jdbcTemplate.update(DELETE_ALL_GIFT_CERTS_BY_NAMES + generateParamStr(names.length), names);
+        } catch (DataAccessException e) {
+            throw new DaoException("DEL-CERTS-BY-NAMES", "Exception deleting certs by names " + Arrays.toString(names), e);
+        }
     }
 
     public void deleteLinksToTagsByCertNames(String[] names) {
         List<GiftCert> giftCerts = getGiftCertsByNames(names);
         if (giftCerts.isEmpty()) return;
         Long[] giftCertIds = giftCerts.stream().map(GiftCert::getGiftCertId).toArray(Long[]::new);
-        jdbcTemplate.update(DELETE_ALL_GIFT_CERTS_LINKS_BY_IDS + generateParamStr(giftCertIds.length), giftCertIds);
+        try {
+            jdbcTemplate.update(DELETE_ALL_GIFT_CERTS_LINKS_BY_IDS + generateParamStr(giftCertIds.length), giftCertIds);
+        } catch (DataAccessException e) {
+            throw new DaoException("DEL-CERTS-LINKS-BY-IDS", "Exception deleting certs links by cert Ids " + giftCertIds, e);
+        }
     }
 }

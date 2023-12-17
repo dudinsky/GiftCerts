@@ -29,7 +29,7 @@ public class GiftCertService {
     private void processTagsForCertificate(GiftCert giftCert) {
         if (giftCert.getTags() == null) return;
         List<String> tagNames = giftCert.getTags().stream().map(Tag::getName).collect(Collectors.toList());
-        List<Tag> existingTags = tagDao.getTagByNames(tagNames.toArray(String[]::new));
+        List<Tag> existingTags = tagDao.getTagsByNames(tagNames.toArray(String[]::new));
         List<String> existingTagNames = existingTags.stream().map(Tag::getName).collect(Collectors.toList());
         List<Tag> insertedTags = giftCert.getTags().stream()
                 .filter(tag -> !existingTagNames.contains(tag.getName()))
